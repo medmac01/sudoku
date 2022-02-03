@@ -19,7 +19,7 @@
    <string>sudokuGame</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTableWidget" name="tableWidget">
+   <widget class="QTableWidget" name="mainBoard">
     <property name="geometry">
      <rect>
       <x>160</x>
@@ -30,7 +30,7 @@
     </property>
     <property name="font">
      <font>
-      <family>Nexa Light</family>
+      <family>Roboto Mono</family>
       <pointsize>14</pointsize>
      </font>
     </property>
@@ -92,7 +92,7 @@
     <column/>
     <column/>
    </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="mainTitle">
     <property name="geometry">
      <rect>
       <x>160</x>
@@ -132,7 +132,7 @@
      <string>SCORE : </string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_3">
+   <widget class="QLabel" name="scoreInt">
     <property name="geometry">
      <rect>
       <x>540</x>
@@ -151,7 +151,7 @@
      <string>88888</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_4">
+   <widget class="QLabel" name="currentlevel">
     <property name="geometry">
      <rect>
       <x>160</x>
@@ -172,7 +172,7 @@
      <string>LEVEL: EASY</string>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>160</x>
@@ -183,7 +183,7 @@
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QPushButton" name="newGame">
+      <widget class="QPushButton" name="newGameBt">
        <property name="font">
         <font>
          <family>Nexa Light</family>

@@ -1,118 +1,446 @@
 #include "solver.h"
-#define add(i,j,k,v) s0[i]^=v,s1[j]^=v,s2[k]^=v
-const int pos[9][9]={{0,0,0,1,1,1,2,2,2},{0,0,0,1,1,1,2,2,2},{0,0,0,1,1,1,2,2,2},{3,3,3,4,4,4,5,5,5},{3,3,3,4,4,4,5,5,5},{3,3,3,4,4,4,5,5,5},{6,6,6,7,7,7,8,8,8},{6,6,6,7,7,7,8,8,8},{6,6,6,7,7,7,8,8,8}};
+#include <iostream>
+#include <algorithm>
+#include <ctime>
+#include <cstdlib>
+#include <fstream>
+#include <sstream>
+#include <vector>
+
+#define UNASSIGNED 0
+
+using namespace std;
 
 
-Solver::Solver(QObject *parent) : QObject(parent)
+// START: Get grid as string in row major order
+QString Board::getGrid()
 {
-    srand(time(0));limit=2;
-    for(int i=0;i<1024;++i)idx[i]=0;
-    for(int i=1;i<10;i++)idx[1<<i]=i;
-}
-
-int Solver::calc(int x){
-    int f=0;
-    while(x)f+=x&1,x>>=1;
-    return f;
-}
-
-void Solver::dfs(int t){
-    if(t==tot+1)
-        ans++;
-    else{
-        int x=p[t].x,y=p[t].y,z=pos[x][y];
-        for(int s3=s0[x]&s1[y]&s2[z],i;s3&&ans<limit;s3-=i)
-            i=s3&-s3,add(x,y,z,i),a.m[x][y]=idx[i],dfs(t+1),add(x,y,z,i);
-    }
-}
-
-int Solver::only1sol(int m,int symm)
-{
-    for(int i=1;i<=m;++i)
+  QString s = "";
+  for(int row_num=0; row_num<9; ++row_num)
+  {
+    for(int col_num=0; col_num<9; ++col_num)
     {
-        tmp_m.m[q[i].x][q[i].y]=0;
-        if(symm)
-            tmp_m.m[8-q[i].x][8-q[i].y]=0;
+      s.append(grid[row_num][col_num]);
+      cout << grid[row_num][col_num] << endl;
     }
-    int res=solve(tmp_m)==1;
-    for(int i=1;i<=81;++i)
-        tmp_m.m[q[i].x][q[i].y]=q[i].v;
-    return res;
-}
+  }
 
-int Solver::generate(int symm)
+  return s;
+}
+// END: Get grid as string in row major order
+
+
+// START: Generate random number
+int genRandNum(int maxLimit)
 {
-    solve(zero);
-    cnt=0;
-    for(int i=0;i<9;++i)
-        for(int j=0;j<9;++j)
-            q[++cnt]=(Trip){i,j,a.m[i][j]};
-    if(symm)cnt=41;
-    std::random_shuffle(q+1,q+1+cnt);
-    tmp_m=a;int blank=0;
-    for(int i=1,tmpa,tmpb;i<=cnt;++i)
+  return rand()%maxLimit;
+}
+// END: Generate random number
+
+
+// START: Create seed grid
+void Board::createSeed()
+{
+  this->solveGrid();
+
+  // Saving the solution grid
+  for(int i=0;i<9;i++)
+  {
+    for(int j=0;j<9;j++)
     {
-        tmpa=tmp_m.m[q[i].x][q[i].y];
-        if(symm)tmpb=tmp_m.m[8-q[i].x][8-q[i].y];
-        tmp_m.m[q[i].x][q[i].y]=0;
-        if(symm)tmp_m.m[8-q[i].x][8-q[i].y]=0;
-        if(solve(tmp_m)>1)
+      this->solnGrid[i][j] = this->grid[i][j];
+    }
+  }
+}
+// END: Create seed grid
+
+
+// START: Intialising
+Board::Board(int difficulty)
+{
+
+  // initialize difficulty level
+  this->difficultyLevel = difficulty;
+
+  // Randomly shuffling the array of removing grid positions
+  for(int i=0;i<81;i++)
+  {
+    this->gridPos[i] = i;
+  }
+
+  random_shuffle(this->gridPos, (this->gridPos) + 81, genRandNum);
+
+  // Randomly shuffling the guessing number array
+  for(int i=0;i<9;i++)
+  {
+    this->guessNum[i]=i+1;
+  }
+
+  random_shuffle(this->guessNum, (this->guessNum) + 9, genRandNum);
+
+  // Initialising the grid
+  for(int i=0;i<9;i++)
+  {
+    for(int j=0;j<9;j++)
+    {
+      this->grid[i][j]=0;
+    }
+  }
+
+  grid_status = true;
+}
+// END: Initialising
+
+
+// START: Custom Initialising with grid passed as argument
+Board::Board(string grid_str, bool row_major)
+{
+  if(grid_str.length() != 81)
+  {
+    grid_status=false;
+    return;
+  }
+
+  // First pass: Check if all cells are valid
+  for(int i=0; i<81; ++i)
+  {
+    int curr_num = grid_str[i]-'0';
+    if(!((curr_num == UNASSIGNED) || (curr_num > 0 && curr_num < 10)))
+    {
+      grid_status=false;
+      return;
+    }
+
+    if(row_major) grid[i/9][i%9] = curr_num;
+    else          grid[i%9][i/9] = curr_num;
+  }
+
+  // Second pass: Check if all columns are valid
+  for (int col_num=0; col_num<9; ++col_num)
+  {
+    bool nums[10]={false};
+    for (int row_num=0; row_num<9; ++row_num)
+    {
+      int curr_num = grid[row_num][col_num];
+      if(curr_num!=UNASSIGNED && nums[curr_num]==true)
+      {
+        grid_status=false;
+        return;
+      }
+      nums[curr_num] = true;
+    }
+  }
+
+  // Third pass: Check if all rows are valid
+  for (int row_num=0; row_num<9; ++row_num)
+  {
+    bool nums[10]={false};
+    for (int col_num=0; col_num<9; ++col_num)
+    {
+      int curr_num = grid[row_num][col_num];
+      if(curr_num!=UNASSIGNED && nums[curr_num]==true)
+      {
+        grid_status=false;
+        return;
+      }
+      nums[curr_num] = true;
+    }
+  }
+
+  // Fourth pass: Check if all blocks are valid
+  for (int block_num=0; block_num<9; ++block_num)
+  {
+    bool nums[10]={false};
+    for (int cell_num=0; cell_num<9; ++cell_num)
+    {
+      int curr_num = grid[((int)(block_num/3))*3 + (cell_num/3)][((int)(block_num%3))*3 + (cell_num%3)];
+      if(curr_num!=UNASSIGNED && nums[curr_num]==true)
+      {
+        grid_status=false;
+        return;
+      }
+      nums[curr_num] = true;
+    }
+  }
+
+  // Randomly shuffling the guessing number array
+  for(int i=0;i<9;i++)
+  {
+    this->guessNum[i]=i+1;
+  }
+
+  random_shuffle(this->guessNum, (this->guessNum) + 9, genRandNum);
+
+  grid_status = true;
+}
+// END: Custom Initialising
+
+
+// START: Verification status of the custom grid passed
+bool Board::verifyGridStatus()
+{
+  return grid_status;
+}
+// END: Verification of the custom grid passed
+
+
+// START: Printing the grid
+void Board::printGrid()
+{
+  for(int i=0;i<9;i++)
+  {
+    for(int j=0;j<9;j++)
+    {
+      if(grid[i][j] == 0)
+    cout<<".";
+      else
+    cout<<grid[i][j];
+      cout<<"|";
+    }
+    cout<<endl;
+  }
+
+  cout<<"\nDifficulty of current Board(0 being easiest): "<<this->difficultyLevel;
+  cout<<endl;
+}
+// END: Printing the grid
+
+
+// START: Helper functions for solving grid
+bool FindUnassignedLocation(int grid[9][9], int &row, int &col)
+{
+    for (row = 0; row < 9; row++)
+    {
+        for (col = 0; col < 9; col++)
         {
-            tmp_m.m[q[i].x][q[i].y]=tmpa;
-            if(symm)tmp_m.m[8-q[i].x][8-q[i].y]=tmpb;
+            if (grid[row][col] == UNASSIGNED)
+                return true;
         }
-        else blank++;
     }
-    a=tmp_m;
-    return blank;
+
+    return false;
 }
 
-int Solver::solve(Mat _,int lim){
-    ans=tot=0;a=_;int flag=a.cnt0()==81;limit=lim;
-    for(int i=1;i<10;i++)s0[i-1]=s1[i-1]=s2[i-1]=1022;
-    for(int i=0;i<9;i++)
-        for(int j=0;j<9;j++){
-            if(a.m[i][j])add(i,j,pos[i][j],1<<a.m[i][j]);
-            showtime.m[i][j]=0;
-        }
-    for(int i=0;i<9;i++)
-        for(int j=0;j<9;j++)
-            if(a.m[i][j]==0)p[++tot]=(Trip){i,j,calc(s0[i]&s1[j]&s2[pos[i][j]])};
-    //if(flag)
-    std::random_shuffle(p+1,p+1+tot);
-    for(int i=1;i<=tot;i++){
-        int x=p[i].v,k=i;
-        for(int j=i+1;j<=tot;j++)if(p[j].v<x)x=p[j].v,k=j;
-        swp=p[i],p[i]=p[k],p[k]=swp;showtime.m[p[i].x][p[i].y]=i;
-        for(int j=i+1;j<=tot;j++)if(p[j].x==p[i].x||p[j].y==p[i].y||pos[p[j].x][p[j].y]==pos[p[i].x][p[i].y])p[j].v--;
-    }
-    if(limit==1&&0)
-    {
-        for(int i=1;i<=tot;++i)
-            qDebug()<<i<<" "<<p[i].x<<" "<<p[i].y<<" "<<p[i].v;
-    }
-    if(flag)
-        limit=30;
-    dfs(1);
-    if(flag)
-        limit=2;
-    return ans;
-}
-
-int Solver::generate_range(int l,int r,int symm)
+bool UsedInRow(int grid[9][9], int row, int num)
 {
-    while(generate(symm),a.cnt0()<l);
-    if(a.cnt0()>r)
+    for (int col = 0; col < 9; col++)
     {
-        tmp_m=a;solve(tmp_m,1);
-        int target=rand()%(r-l+1)+l;
-        for(int i=cnt;i>0&&tmp_m.cnt0()>target;--i)
-        {
-            tmp_m.m[q[i].x][q[i].y]=a.m[q[i].x][q[i].y];
-            if(symm)
-                tmp_m.m[8-q[i].x][8-q[i].y]=a.m[8-q[i].x][8-q[i].y];
-        }
-        a=tmp_m;
+        if (grid[row][col] == num)
+            return true;
     }
-    return a.cnt0();
+
+    return false;
 }
+
+bool UsedInCol(int grid[9][9], int col, int num)
+{
+    for (int row = 0; row < 9; row++)
+    {
+        if (grid[row][col] == num)
+            return true;
+    }
+
+    return false;
+}
+
+bool UsedInBox(int grid[9][9], int boxStartRow, int boxStartCol, int num)
+{
+    for (int row = 0; row < 3; row++)
+    {
+        for (int col = 0; col < 3; col++)
+        {
+            if (grid[row+boxStartRow][col+boxStartCol] == num)
+                return true;
+        }
+    }
+
+    return false;
+}
+
+bool isSafe(int grid[9][9], int row, int col, int num)
+{
+    return !UsedInRow(grid, row, num) && !UsedInCol(grid, col, num) && !UsedInBox(grid, row - row%3 , col - col%3, num);
+}
+
+// END: Helper functions for solving grid
+
+
+// START: Modified Board solver
+bool Board::solveGrid()
+{
+    int row, col;
+
+    // If there is no unassigned location, we are done
+    if (!FindUnassignedLocation(this->grid, row, col))
+       return true; // success!
+
+    // Consider digits 1 to 9
+    for (int num = 0; num < 9; num++)
+    {
+        // if looks promising
+        if (isSafe(this->grid, row, col, this->guessNum[num]))
+        {
+            // make tentative assignment
+            this->grid[row][col] = this->guessNum[num];
+
+            // return, if success, yay!
+            if (solveGrid())
+                return true;
+
+            // failure, unmake & try again
+            this->grid[row][col] = UNASSIGNED;
+        }
+    }
+
+    return false; // this triggers backtracking
+
+}
+// END: Modified Board Solver
+
+
+// START: Check if the grid is uniquely solvable
+void Board::countSoln(int &number)
+{
+  int row, col;
+
+  if(!FindUnassignedLocation(this->grid, row, col))
+  {
+    number++;
+    return ;
+  }
+
+
+  for(int i=0;i<9 && number<2;i++)
+  {
+      if( isSafe(this->grid, row, col, this->guessNum[i]) )
+      {
+        this->grid[row][col] = this->guessNum[i];
+        countSoln(number);
+      }
+
+      this->grid[row][col] = UNASSIGNED;
+  }
+
+}
+// END: Check if the grid is uniquely solvable
+
+
+// START: Gneerate puzzle
+void Board::genPuzzle()
+{
+  for(int i=0;i<81;i++)
+  {
+    int x = (this->gridPos[i])/9;
+    int y = (this->gridPos[i])%9;
+    int temp = this->grid[x][y];
+    this->grid[x][y] = UNASSIGNED;
+
+    // If now more than 1 solution , replace the removed cell back.
+    int check=0;
+    countSoln(check);
+    if(check!=1)
+    {
+      this->grid[x][y] = temp;
+    }
+  }
+}
+// END: Generate puzzle
+
+
+// START: Printing into SVG file
+void Board::printSVG(string path="")
+{
+}
+// END: Printing into SVG file
+
+
+// START: Calculate branch difficulty score
+int Board::branchDifficultyScore()
+{
+   int emptyPositions = -1;
+   int tempGrid[9][9];
+   int sum=0;
+
+   for(int i=0;i<9;i++)
+  {
+    for(int j=0;j<9;j++)
+    {
+      tempGrid[i][j] = this->grid[i][j];
+    }
+  }
+
+   while(emptyPositions!=0)
+   {
+     vector<vector<int> > empty;
+
+     for(int i=0;i<81;i++)
+     {
+        if(tempGrid[(int)(i/9)][(int)(i%9)] == 0)
+        {
+          vector<int> temp;
+      temp.push_back(i);
+
+      for(int num=1;num<=9;num++)
+      {
+        if(isSafe(tempGrid,i/9,i%9,num))
+        {
+          temp.push_back(num);
+        }
+      }
+
+      empty.push_back(temp);
+        }
+
+     }
+
+     if(empty.size() == 0)
+     {
+       cout<<"Hello: "<<sum<<endl;
+       return sum;
+     }
+
+     int minIndex = 0;
+
+     int check = empty.size();
+     for(int i=0;i<check;i++)
+     {
+       if(empty[i].size() < empty[minIndex].size())
+      minIndex = i;
+     }
+
+     int branchFactor=empty[minIndex].size();
+     int rowIndex = empty[minIndex][0]/9;
+     int colIndex = empty[minIndex][0]%9;
+
+     tempGrid[rowIndex][colIndex] = this->solnGrid[rowIndex][colIndex];
+     sum = sum + ((branchFactor-2) * (branchFactor-2)) ;
+
+     emptyPositions = empty.size() - 1;
+   }
+
+   return sum;
+
+}
+// END: Finish branch difficulty score
+
+
+// START: Calculate difficulty level of current grid
+void Board::calculateDifficulty()
+{
+  int B = branchDifficultyScore();
+  int emptyCells = 0;
+
+  for(int i=0;i<9;i++)
+  {
+    for(int j=0;j<9;j++)
+    {
+    if(this->grid[i][j] == 0)
+       emptyCells++;
+    }
+  }
+
+  this->difficultyLevel = B*100 + emptyCells;
+}
+
+
+

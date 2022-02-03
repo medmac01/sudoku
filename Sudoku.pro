@@ -1,3 +1,4 @@
+
 QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -15,7 +16,8 @@ SOURCES += \
 
 HEADERS += \
     solver.h \
-    sudokugame.h
+    sudokugame.h \
+
 
 FORMS += \
     sudokugame.ui
