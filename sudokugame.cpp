@@ -12,6 +12,7 @@ sudokuGame::sudokuGame(QWidget *parent)
 {
     ui->setupUi(this);
     makeConnections();
+    ui->solveBt->setDisabled(true);
 }
 
 sudokuGame::~sudokuGame()
@@ -22,6 +23,7 @@ sudokuGame::~sudokuGame()
 void sudokuGame::newGame(){
     //Set score to 0
     ui->scoreInt->setText("00000");
+    ui->solveBt->setDisabled(false);
     boardGenerator();
 
 }
@@ -30,15 +32,15 @@ void sudokuGame::boardGenerator(){
 //    srand(time(NULL));
 
     // Creating an instance of Board
-    Board *puzzle = new Board(0);
+    currentBoard = new Board(0);
 
     // Creating a seed for puzzle generation
-    puzzle->createSeed();
+    currentBoard->createSeed();
 
     // Generating the puzzle
-    puzzle->genPuzzle();
+    currentBoard->genPuzzle();
 //    QString s = to_string(puzzle->grid[0][4]);
-    loadBoard(puzzle);
+    loadBoard(currentBoard);
 
 //    QMessageBox::critical(this,"Error",);
 }
@@ -58,7 +60,15 @@ void sudokuGame::loadBoard(Board *b){
     }
 }
 
+void sudokuGame::solveBoard(){
+    if(currentBoard != nullptr) {
+        currentBoard->solveGrid();
+        loadBoard(currentBoard);
+    }
+}
+
 void sudokuGame::makeConnections(){
     connect(ui->newGameBt,&QPushButton::clicked,this,&sudokuGame::newGame);
+    connect(ui->solveBt,&QPushButton::clicked,this,&sudokuGame::solveBoard);
 
 }

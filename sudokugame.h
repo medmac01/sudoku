@@ -20,12 +20,14 @@ public:
     void newGame();
     void boardGenerator();
     void loadBoard(Board *b);
+    void solveBoard();
     ~sudokuGame();
 private slots:
 
 
 private:
     Ui::sudokuGame *ui;
+    Board * currentBoard = nullptr;
 
 
 
