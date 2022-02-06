@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "solver.h"
+#include <vector>
 
 
 QT_BEGIN_NAMESPACE
@@ -21,14 +22,25 @@ public:
     void boardGenerator();
     void loadBoard(Board *b);
     void solveBoard();
+    void checkInput();
+    bool checkifsolved();
+    void updateHistory();
+    struct Hist {
+        int value;
+        int row;
+        int col;
+    };
+    Hist* newHist = new Hist;
     ~sudokuGame();
 private slots:
-
-
+    void quitGame();
+    void undo();
+    void solved();
 private:
     Ui::sudokuGame *ui;
     Board * currentBoard = nullptr;
-
+    Board * solvedBoard = nullptr;
+    int score = 0;
 
 
 };

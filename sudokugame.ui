@@ -19,6 +19,9 @@
    <string>sudokuGame</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
      <widget class="QSplitter" name="splitter">
@@ -93,10 +96,22 @@
     </item>
     <item>
      <widget class="QTableWidget" name="mainBoard">
+      <property name="minimumSize">
+       <size>
+        <width>470</width>
+        <height>470</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>470</width>
+        <height>470</height>
+       </size>
+      </property>
       <property name="font">
        <font>
         <family>Roboto Mono</family>
-        <pointsize>16</pointsize>
+        <pointsize>20</pointsize>
        </font>
       </property>
       <property name="contextMenuPolicy">
@@ -179,14 +194,26 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_2">
+       <widget class="QPushButton" name="undoBt">
         <property name="font">
          <font>
           <family>Nexa Light</family>
          </font>
         </property>
         <property name="text">
-         <string>Clear All</string>
+         <string>Undo</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="checkBt">
+        <property name="font">
+         <font>
+          <family>Nexa Light</family>
+         </font>
+        </property>
+        <property name="text">
+         <string>Check</string>
         </property>
        </widget>
       </item>
