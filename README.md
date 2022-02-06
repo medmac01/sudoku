@@ -295,12 +295,89 @@ A `Board` is defined by the following:
 
 **Methods**
   - `bool solveGrid();` : solves the grid using backtracking algorithm.
+```cpp
+bool Board::solveGrid()
+{
+    int row, col;
+
+    // If there is no unassigned location, then the board is solved
+    if (!FindUnassignedLocation(this->grid, row, col))
+       return true; // success!
+
+    for (int num = 0; num < 9; num++)
+    {
+        if (isSafe(this->grid, row, col, this->guessNum[num]))
+        {
+            this->grid[row][col] = this->guessNum[num];
+
+            if (solveGrid())
+                return true;
+                
+            this->grid[row][col] = UNASSIGNED;
+        }
+    }
+
+    return false; // this triggers backtracking
+
+}
+```
   - `QString getGrid();` : returns the values of the grid in a QString.
+```cpp
+QString Board::getGrid()
+{
+  QString s = "";
+  for(int row_num=0; row_num<9; ++row_num)
+  {
+    for(int col_num=0; col_num<9; ++col_num)
+    {
+      s.append(grid[row_num][col_num]);
+      cout << grid[row_num][col_num] << endl;
+    }
+  }
+
+  return s;
+}
+```
   - `void genPuzzle();` : generates a new unsolved grid.
+```cpp
+void Board::genPuzzle()
+{
+  for(int i=0;i<81;i++)
+  {
+    int x = (this->gridPos[i])/9;
+    int y = (this->gridPos[i])%9;
+    int temp = this->grid[x][y];
+    this->grid[x][y] = UNASSIGNED;
+
+    // If now more than 1 solution , replace the removed cell back.
+    int check=0;
+    countSoln(check);
+    if(check!=1)
+    {
+      this->grid[x][y] = temp;
+    }
+  }
+}
+```
   - `void createSeed();` : creates the seed to generate the puzzle.
+```cpp
+void Board::createSeed()
+{
+  this->solveGrid();
+
+  // Saving the solution grid
+  for(int i=0;i<9;i++)
+  {
+    for(int j=0;j<9;j++)
+    {
+      this->solnGrid[i][j] = this->grid[i][j];
+    }
+  }
+}
+```
 
 ## Algorithm 
-For the algorithm, we got inspired from this repository : vaithak/Sudoku-Generator 
+For the algorithm, I got inspired from this repository : vaithak/Sudoku-Generator 
 The solver relies on backtracking algorithms to generate the board puzzle.
 The algorithm can be described by the following flowchart:
 
