@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>488</width>
+    <width>530</width>
     <height>619</height>
    </rect>
   </property>
@@ -194,6 +194,18 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="saveBt">
+        <property name="font">
+         <font>
+          <family>Nexa Light</family>
+         </font>
+        </property>
+        <property name="text">
+         <string>Save</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="undoBt">
         <property name="font">
          <font>
@@ -250,7 +262,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>488</width>
+     <width>530</width>
      <height>21</height>
     </rect>
    </property>

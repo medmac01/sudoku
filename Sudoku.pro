@@ -12,16 +12,19 @@ CONFIG += c++11
 SOURCES += \
     history.cpp \
     main.cpp \
+    solveddialog.cpp \
     solver.cpp \
     sudokugame.cpp
 
 HEADERS += \
     history.h \
+    solveddialog.h \
     solver.h \
     sudokugame.h \
 
 
 FORMS += \
+    solved_dialog.ui \
     sudokugame.ui
 
 # Default rules for deployment.

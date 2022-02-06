@@ -2,7 +2,9 @@
 #include "ui_sudokugame.h"
 #include <ctime>
 #include <QMessageBox>
-
+#include <solveddialog.h>
+#include <QFileDialog>
+#include <QTextStream>
 
 //#include "solver.cpp"
 
@@ -22,6 +24,9 @@ sudokuGame::sudokuGame(QWidget *parent)
 sudokuGame::~sudokuGame()
 {
     delete ui;
+    delete currentBoard;
+    delete solvedBoard;
+    delete newHist;
 }
 
 void sudokuGame::newGame(){
@@ -57,15 +62,17 @@ void sudokuGame::loadBoard(Board *b){
         for(int j=0;j<9;j++){
             auto buffer = to_string(b->grid[i][j]);
             QString s = QString::fromStdString(buffer);
-            QTableWidgetItem* tmp = new QTableWidgetItem(s);
+            QTableWidgetItem* tmp = new QTableWidgetItem(QString::fromStdString(buffer));
             if(buffer == "0")
-                tmp->setText("");
+                    tmp->setText("");
             else
                 tmp->setFlags(Qt::ItemIsEnabled);
             ui->mainBoard->setItem(i,j,tmp);
+            delete tmp;
         }
     }
 }
+
 
 void sudokuGame::solveBoard(){
     if(currentBoard != nullptr) {
@@ -88,6 +95,8 @@ void sudokuGame::makeConnections(){
     connect(ui->mainBoard,&QTableWidget::cellDoubleClicked,this,&sudokuGame::updateHistory);
     connect(ui->mainBoard,&QTableWidget::cellChanged,this,&sudokuGame::solved);
     connect(ui->undoBt,&QPushButton::clicked,this,&sudokuGame::undo);
+    connect(ui->saveBt,&QPushButton::clicked,this,&sudokuGame::openFileDiag);
+
 }
 
 void sudokuGame::undo() {
@@ -126,6 +135,46 @@ bool sudokuGame::checkifsolved(){
     return true;
 }
 
+void sudokuGame::loadBoardFromFile(QString filename){
+    QFile file(filename);
+
+    if(file.open(QFile::ReadOnly))
+    {
+        QTextStream in(&file);
+        QStringList data;
+
+
+        QString line= in.readLine();
+        data = line.split(",");
+        int row = 0;
+
+        for(int i=0;i<81;i++) {
+            if(data[i].toInt()>9)
+                currentBoard->grid[row][i%9] = data[i].toInt()/10;
+            else
+                currentBoard->grid[row][i%9] = data[i].toInt();
+            if(i%9 == 0)
+                row++;
+        }
+        loadBoard(currentBoard);
+    }
+}
+
+void sudokuGame::openFileDiag() {
+    auto diag = new QFileDialog(this);
+
+    currentFile = diag->getOpenFileName(this, tr("Open File"), "/", tr("CSV Files (*.sku)"));
+    setWindowTitle(currentFile);
+
+        if(currentBoard == nullptr){
+            currentBoard = new Board(0);
+            solvedBoard = new Board(0);
+            *solvedBoard = *currentBoard;
+        }
+
+    loadBoardFromFile(currentFile);
+}
+
 void sudokuGame::quitGame() {
     auto reply = QMessageBox::question(this,"Quit","Do you really want to quit?");
 
@@ -133,7 +182,67 @@ void sudokuGame::quitGame() {
         qApp->exit();
 }
 
+void sudokuGame::saveBoard() {
+    //Creating a file dialog to choose a file graphically
+    auto dialog = new QFileDialog(this);
+
+    //Check if the current file has a name or not
+    if(currentFile == "")
+    {
+       currentFile = dialog->getSaveFileName(this,"Save file",".sku",tr("Sudoku Board(*.sku)"));
+
+       //Update the window title with the file name
+       setWindowTitle(currentFile);
+    }
+
+   //If we have a name simply save the content
+   if( currentFile != "")
+   {
+           saveBoardContent(currentFile);
+   }
+}
+
+void sudokuGame::saveBoardContent(QString filename){
+    QFile file(filename);
+
+    if(file.open(QFile::WriteOnly))  //Opening the file in writing mode
+    {
+        //Initiating a stream using the file
+        QTextStream out(&file);
+
+        //loop to save all the content
+        for(int i=0; i < 9;i++)
+            for(int j=0; j < 9; j++)
+            {
+                auto tmp = ui->mainBoard->item(i, j);
+
+                if(tmp) {
+                    if(tmp->flags() == Qt::ItemIsEnabled)
+                        out << tmp->text().toInt()*10 <<",";
+                    else
+                        out << tmp->text().toInt()<<",";
+                }
+                else
+                    out << "0" << ",";
+            }
+        out<<endl;
+
+    }
+    file.close();
+}
+
 void sudokuGame::solved() {
-    if (checkifsolved())
-        QMessageBox::information(this,"Congrats!","Board solved successfully!");
+    if (checkifsolved()){
+        SolvedDialog* diag = new SolvedDialog();
+        auto reply = diag->exec();
+
+        if(reply == SolvedDialog::Accepted) {
+            sudokuGame newS;
+            newS.show();
+        } else if(reply == SolvedDialog::Rejected) {
+            qApp->exit();
+        }
+
+    }
+//        QMessageBox::information(this,"Congrats!","Board solved successfully!");
 }

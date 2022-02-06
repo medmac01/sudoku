@@ -25,6 +25,8 @@ public:
     void checkInput();
     bool checkifsolved();
     void updateHistory();
+    void saveBoardContent(QString filename);
+    void loadBoardFromFile(QString filename);
     struct Hist {
         int value;
         int row;
@@ -36,8 +38,11 @@ private slots:
     void quitGame();
     void undo();
     void solved();
+    void saveBoard();
+    void openFileDiag();
 private:
     Ui::sudokuGame *ui;
+    QString currentFile{""};
     Board * currentBoard = nullptr;
     Board * solvedBoard = nullptr;
     int score = 0;
