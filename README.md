@@ -381,9 +381,13 @@ For the algorithm, I got inspired from this repository : vaithak/Sudoku-Generato
 The solver relies on backtracking algorithms to generate the board puzzle.
 The algorithm can be described by the following flowchart:
 
+![flowchart](https://user-images.githubusercontent.com/56129562/152710343-5488af46-1bc8-4f92-8a43-982ac749192d.png)
+
+
+<!-- 
 ![image](https://user-images.githubusercontent.com/56129562/152696493-748b620f-c71f-4a8d-a8d8-19967e665fc9.png)
 ![image](https://user-images.githubusercontent.com/56129562/152696556-96ef1dd6-a61d-43a7-ad35-764d3edbe30d.png)
-
+ -->
 
 ## The final Result
 The final result looks like this:
