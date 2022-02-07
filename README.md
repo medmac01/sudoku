@@ -380,8 +380,8 @@ void Board::createSeed()
 For the algorithm, I got inspired from this repository : vaithak/Sudoku-Generator 
 The solver relies on backtracking algorithms to generate the board puzzle.
 The algorithm can be described by the following flowchart:
+<img src="https://user-images.githubusercontent.com/56129562/152710343-5488af46-1bc8-4f92-8a43-982ac749192d.png" width="700"></img>
 
-![flowchart](https://user-images.githubusercontent.com/56129562/152710343-5488af46-1bc8-4f92-8a43-982ac749192d.png)
 
 
 <!-- 
@@ -391,6 +391,7 @@ The algorithm can be described by the following flowchart:
 
 ## The final Result
 The final result looks like this:
+
 
 <!-- ![image](https://user-images.githubusercontent.com/56129562/152696649-0d2b78bf-80e6-4f15-9301-dc0f6372a50a.png) -->
 <img src="https://user-images.githubusercontent.com/56129562/152696649-0d2b78bf-80e6-4f15-9301-dc0f6372a50a.png" width="800"></img>
